@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Tag, Check } from "lucide-react";
+import { Tag } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface LabelPickerProps {
@@ -25,6 +25,8 @@ export function LabelPicker({
   onChange,
   disabled,
 }: LabelPickerProps) {
+  
+  // Logic to add/remove label ID from the array
   const toggleLabel = (labelId: string) => {
     if (selectedLabels.includes(labelId)) {
       onChange(selectedLabels.filter((id) => id !== labelId));
@@ -38,9 +40,9 @@ export function LabelPicker({
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
-          size="icon-sm"
+          size="icon"
           disabled={disabled}
-          className="rounded-full"
+          className="rounded-full w-8 h-8"
           aria-label="Add label"
         >
           <Tag className="w-4 h-4" />
@@ -59,18 +61,32 @@ export function LabelPicker({
             <div className="p-1">
               {labels.map((label) => {
                 const isSelected = selectedLabels.includes(label._id);
+                
                 return (
-                  <button
+                  <div
                     key={label._id}
+                    role="button"
+                    tabIndex={0}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-accent cursor-pointer outline-none focus:bg-accent"
                     onClick={() => toggleLabel(label._id)}
-                    className={cn(
-                      "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors",
-                      isSelected && "bg-accent"
-                    )}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        toggleLabel(label._id);
+                      }
+                    }}
                   >
-                    <Checkbox checked={isSelected} />
-                    <span className="truncate">{label.name}</span>
-                  </button>
+                    <Checkbox
+                      id={`label-${label._id}`}
+                      checked={isSelected}
+                      onCheckedChange={() => toggleLabel(label._id)}
+                      // Prevent the checkbox click from bubbling up to the div
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <span className="flex-1 truncate select-none">
+                      {label.name}
+                    </span>
+                  </div>
                 );
               })}
             </div>

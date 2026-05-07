@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { NoteType, ViewType } from "@/lib/types";
-import type { NoteColor } from "@/lib/models/note";
+import type { NoteColor } from "@/types/note";
 import {
   createNote,
   updateNote,
@@ -17,12 +17,24 @@ import {
   emptyTrash,
 } from "@/lib/actions/notes";
 
+/**
+ * Global Type for Server Action Responses
+ */
+type ActionResult<T = any> = {
+  success: boolean;
+  error?: string;
+  data?: T;
+};
+
 interface FetchNotesParams {
   view: ViewType;
   labelId?: string;
   search?: string;
 }
 
+/**
+ * API Fetcher for Notes
+ */
 async function fetchNotes(params: FetchNotesParams): Promise<NoteType[]> {
   const searchParams = new URLSearchParams();
   searchParams.set("view", params.view);
@@ -36,6 +48,9 @@ async function fetchNotes(params: FetchNotesParams): Promise<NoteType[]> {
   return response.json();
 }
 
+/**
+ * HOOK: useNotes
+ */
 export function useNotes(params: FetchNotesParams) {
   return useQuery({
     queryKey: ["notes", params],
@@ -43,6 +58,9 @@ export function useNotes(params: FetchNotesParams) {
   });
 }
 
+/**
+ * HOOK: useCreateNote
+ */
 export function useCreateNote() {
   const queryClient = useQueryClient();
 
@@ -54,22 +72,23 @@ export function useCreateNote() {
       labels?: string[];
       isPinned?: boolean;
     }) => {
-      const result = await createNote(data);
-      if (!result.success) {
-        throw new Error(result.error);
-      }
+      const result = (await createNote(data)) as unknown as ActionResult<NoteType>;
+      if (!result.success) throw new Error(result.error);
       return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notes"] });
       toast.success("Note created");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error(error.message || "Failed to create note");
     },
   });
 }
 
+/**
+ * HOOK: useUpdateNote
+ */
 export function useUpdateNote() {
   const queryClient = useQueryClient();
 
@@ -81,22 +100,14 @@ export function useUpdateNote() {
       noteId: string;
       data: Partial<NoteType>;
     }) => {
-      const result = await updateNote(noteId, data);
-      if (!result.success) {
-        throw new Error(result.error);
-      }
+      const result = (await updateNote(noteId, data)) as unknown as ActionResult<NoteType>;
+      if (!result.success) throw new Error(result.error);
       return result.data;
     },
     onMutate: async ({ noteId, data }) => {
-      // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["notes"] });
+      const previousNotes = queryClient.getQueriesData<NoteType[]>({ queryKey: ["notes"] });
 
-      // Snapshot previous value
-      const previousNotes = queryClient.getQueriesData<NoteType[]>({
-        queryKey: ["notes"],
-      });
-
-      // Optimistically update all matching queries
       queryClient.setQueriesData<NoteType[]>({ queryKey: ["notes"] }, (old) => {
         if (!old) return old;
         return old.map((note) =>
@@ -107,7 +118,6 @@ export function useUpdateNote() {
       return { previousNotes };
     },
     onError: (err, variables, context) => {
-      // Rollback on error
       if (context?.previousNotes) {
         context.previousNotes.forEach(([queryKey, data]) => {
           queryClient.setQueryData(queryKey, data);
@@ -121,23 +131,21 @@ export function useUpdateNote() {
   });
 }
 
+/**
+ * HOOK: useDeleteNote
+ */
 export function useDeleteNote() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (noteId: string) => {
-      const result = await deleteNote(noteId);
-      if (!result.success) {
-        throw new Error(result.error);
-      }
+      const result = (await deleteNote(noteId)) as unknown as ActionResult;
+      if (!result.success) throw new Error(result.error);
       return result;
     },
     onMutate: async (noteId) => {
       await queryClient.cancelQueries({ queryKey: ["notes"] });
-
-      const previousNotes = queryClient.getQueriesData<NoteType[]>({
-        queryKey: ["notes"],
-      });
+      const previousNotes = queryClient.getQueriesData<NoteType[]>({ queryKey: ["notes"] });
 
       queryClient.setQueriesData<NoteType[]>({ queryKey: ["notes"] }, (old) => {
         if (!old) return old;
@@ -152,7 +160,7 @@ export function useDeleteNote() {
           queryClient.setQueryData(queryKey, data);
         });
       }
-      toast.error("Failed to delete note");
+      toast.error("Failed to move note to trash");
     },
     onSuccess: () => {
       toast.success("Note moved to trash");
@@ -163,44 +171,43 @@ export function useDeleteNote() {
   });
 }
 
+/**
+ * HOOK: useRestoreNote
+ */
 export function useRestoreNote() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (noteId: string) => {
-      const result = await restoreNote(noteId);
-      if (!result.success) {
-        throw new Error(result.error);
-      }
+      const result = (await restoreNote(noteId)) as unknown as ActionResult;
+      if (!result.success) throw new Error(result.error);
       return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notes"] });
       toast.success("Note restored");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error(error.message || "Failed to restore note");
     },
   });
 }
 
+/**
+ * HOOK: usePermanentlyDeleteNote
+ */
 export function usePermanentlyDeleteNote() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (noteId: string) => {
-      const result = await permanentlyDeleteNote(noteId);
-      if (!result.success) {
-        throw new Error(result.error);
-      }
+      const result = (await permanentlyDeleteNote(noteId)) as unknown as ActionResult;
+      if (!result.success) throw new Error(result.error);
       return result;
     },
     onMutate: async (noteId) => {
       await queryClient.cancelQueries({ queryKey: ["notes"] });
-
-      const previousNotes = queryClient.getQueriesData<NoteType[]>({
-        queryKey: ["notes"],
-      });
+      const previousNotes = queryClient.getQueriesData<NoteType[]>({ queryKey: ["notes"] });
 
       queryClient.setQueriesData<NoteType[]>({ queryKey: ["notes"] }, (old) => {
         if (!old) return old;
@@ -215,7 +222,7 @@ export function usePermanentlyDeleteNote() {
           queryClient.setQueryData(queryKey, data);
         });
       }
-      toast.error("Failed to delete note");
+      toast.error("Failed to delete note permanently");
     },
     onSuccess: () => {
       toast.success("Note permanently deleted");
@@ -226,44 +233,44 @@ export function usePermanentlyDeleteNote() {
   });
 }
 
+/**
+ * HOOK: useEmptyTrash
+ */
 export function useEmptyTrash() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async () => {
-      const result = await emptyTrash();
-      if (!result.success) {
-        throw new Error(result.error);
-      }
+      const result = (await emptyTrash()) as unknown as ActionResult<{ count: number }>;
+      if (!result.success) throw new Error(result.error || "Failed to empty trash");
       return result.data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["notes"] });
-      toast.success(`Deleted ${data.count} note${data.count !== 1 ? "s" : ""}`);
+      const count = data?.count || 0;
+      toast.success(`Deleted ${count} note${count !== 1 ? "s" : ""}`);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error(error.message || "Failed to empty trash");
     },
   });
 }
 
+/**
+ * HOOK: useTogglePinNote
+ */
 export function useTogglePinNote() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (noteId: string) => {
-      const result = await togglePinNote(noteId);
-      if (!result.success) {
-        throw new Error(result.error);
-      }
+      const result = (await togglePinNote(noteId)) as unknown as ActionResult;
+      if (!result.success) throw new Error(result.error);
       return result;
     },
     onMutate: async (noteId) => {
       await queryClient.cancelQueries({ queryKey: ["notes"] });
-
-      const previousNotes = queryClient.getQueriesData<NoteType[]>({
-        queryKey: ["notes"],
-      });
+      const previousNotes = queryClient.getQueriesData<NoteType[]>({ queryKey: ["notes"] });
 
       queryClient.setQueriesData<NoteType[]>({ queryKey: ["notes"] }, (old) => {
         if (!old) return old;
@@ -280,7 +287,7 @@ export function useTogglePinNote() {
           queryClient.setQueryData(queryKey, data);
         });
       }
-      toast.error("Failed to update note");
+      toast.error("Failed to update pin status");
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["notes"] });
@@ -288,23 +295,21 @@ export function useTogglePinNote() {
   });
 }
 
+/**
+ * HOOK: useToggleArchiveNote
+ */
 export function useToggleArchiveNote() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (noteId: string) => {
-      const result = await toggleArchiveNote(noteId);
-      if (!result.success) {
-        throw new Error(result.error);
-      }
+      const result = (await toggleArchiveNote(noteId)) as unknown as ActionResult;
+      if (!result.success) throw new Error(result.error);
       return result;
     },
     onMutate: async (noteId) => {
       await queryClient.cancelQueries({ queryKey: ["notes"] });
-
-      const previousNotes = queryClient.getQueriesData<NoteType[]>({
-        queryKey: ["notes"],
-      });
+      const previousNotes = queryClient.getQueriesData<NoteType[]>({ queryKey: ["notes"] });
 
       queryClient.setQueriesData<NoteType[]>({ queryKey: ["notes"] }, (old) => {
         if (!old) return old;
@@ -319,7 +324,7 @@ export function useToggleArchiveNote() {
           queryClient.setQueryData(queryKey, data);
         });
       }
-      toast.error("Failed to update note");
+      toast.error("Failed to update archive status");
     },
     onSuccess: () => {
       toast.success("Note updated");
@@ -330,29 +335,21 @@ export function useToggleArchiveNote() {
   });
 }
 
+/**
+ * HOOK: useUpdateNoteColor
+ */
 export function useUpdateNoteColor() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      noteId,
-      color,
-    }: {
-      noteId: string;
-      color: NoteColor;
-    }) => {
-      const result = await updateNoteColor(noteId, color);
-      if (!result.success) {
-        throw new Error(result.error);
-      }
+    mutationFn: async ({ noteId, color }: { noteId: string; color: NoteColor }) => {
+      const result = (await updateNoteColor(noteId, color)) as unknown as ActionResult;
+      if (!result.success) throw new Error(result.error);
       return result;
     },
     onMutate: async ({ noteId, color }) => {
       await queryClient.cancelQueries({ queryKey: ["notes"] });
-
-      const previousNotes = queryClient.getQueriesData<NoteType[]>({
-        queryKey: ["notes"],
-      });
+      const previousNotes = queryClient.getQueriesData<NoteType[]>({ queryKey: ["notes"] });
 
       queryClient.setQueriesData<NoteType[]>({ queryKey: ["notes"] }, (old) => {
         if (!old) return old;
@@ -377,29 +374,21 @@ export function useUpdateNoteColor() {
   });
 }
 
+/**
+ * HOOK: useUpdateNoteLabels
+ */
 export function useUpdateNoteLabels() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      noteId,
-      labels,
-    }: {
-      noteId: string;
-      labels: string[];
-    }) => {
-      const result = await updateNoteLabels(noteId, labels);
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-      return result;
+    mutationFn: async ({ noteId, labels }: { noteId: string; labels: string[] }) => {
+      const result = (await updateNoteLabels(noteId, labels)) as unknown as ActionResult<NoteType>;
+      if (!result || !result.success) throw new Error(result?.error || "Failed to update labels");
+      return result.data;
     },
     onMutate: async ({ noteId, labels }) => {
       await queryClient.cancelQueries({ queryKey: ["notes"] });
-
-      const previousNotes = queryClient.getQueriesData<NoteType[]>({
-        queryKey: ["notes"],
-      });
+      const previousNotes = queryClient.getQueriesData<NoteType[]>({ queryKey: ["notes"] });
 
       queryClient.setQueriesData<NoteType[]>({ queryKey: ["notes"] }, (old) => {
         if (!old) return old;
@@ -416,6 +405,7 @@ export function useUpdateNoteLabels() {
           queryClient.setQueryData(queryKey, data);
         });
       }
+      console.error("Label update error:", err);
       toast.error("Failed to update note labels");
     },
     onSettled: () => {

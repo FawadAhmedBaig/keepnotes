@@ -6,8 +6,9 @@ import type { NoteType, LabelType, ViewType } from "@/lib/types";
 import { NOTE_COLORS, type NoteColor } from "@/types/note";
 import { NoteToolbar } from "./note-toolbar";
 import { LabelBadge } from "@/components/labels/label-badge";
-import { colorClasses } from "./color-picker";
+import { getNoteColorClass } from "./color-picker";
 import { Pin } from "lucide-react";
+import { INote } from "../../types/note";
 
 interface NoteCardProps {
   note: NoteType;
@@ -46,10 +47,12 @@ export function NoteCard({
 
   return (
     <article
-      className={cn(
-        "group relative flex flex-col rounded-lg border border-border cursor-pointer transition-shadow hover:shadow-md break-inside-avoid mb-4",
-        colorClasses[note.color]
-      )}
+className={cn(
+    // Base classes
+    "group relative flex flex-col rounded-lg border border-border cursor-pointer transition-shadow hover:shadow-md break-inside-avoid mb-4",
+    // Dynamic color class from our helper
+    getNoteColorClass(note.color)
+  )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleClick}

@@ -3,13 +3,13 @@ import Pusher from "pusher";
 let pusherInstance: Pusher | null = null;
 
 export function getPusher(): Pusher | null {
-  // Return null if env vars are not set (allows app to work without Pusher)
   if (
     !process.env.PUSHER_APP_ID ||
     !process.env.PUSHER_KEY ||
     !process.env.PUSHER_SECRET ||
     !process.env.PUSHER_CLUSTER
   ) {
+    console.warn("Pusher environment variables are missing.");
     return null;
   }
 
@@ -34,17 +34,34 @@ export type PusherEventType =
   | "label:updated"
   | "label:deleted";
 
-export async function triggerPusherEvent(
-  userId: string,
+/**
+ * Main trigger function
+ */
+export async function triggerPusher(
+  channel: string,
   event: PusherEventType,
-  data: Record<string, unknown>
+  data: any
 ) {
   const pusher = getPusher();
   if (!pusher) return;
 
   try {
-    await pusher.trigger(`private-user-${userId}`, event, data);
+    await pusher.trigger(channel, event, data);
   } catch (error) {
     console.error("Pusher trigger error:", error);
   }
 }
+
+/**
+ * ALIAS EXPORT: This fixes the "Export not found" error in your hooks
+ * It maps the old name to the new function.
+ */
+export const triggerPusherEvent = async (
+  userId: string,
+  event: PusherEventType,
+  data: any
+) => {
+  // Most of your app uses 'user-{id}' or 'private-user-{id}'
+  // We'll use the common pattern here:
+  return triggerPusher(`user-${userId}`, event, data);
+};

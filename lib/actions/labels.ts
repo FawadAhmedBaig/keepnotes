@@ -1,12 +1,12 @@
 "use server";
 
-import { revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache"; // Using revalidatePath for consistency
 import { auth } from "@/auth";
-import { connectToDatabase } from "@/lib/mongodb";
+import dbConnect from "@/lib/mongodb"; // FIXED: Default import
 import { Label } from "@/lib/models/label";
 import { Note } from "@/lib/models/note";
 import { labelSchema } from "@/lib/validations/note";
-import { triggerPusherEvent } from "@/lib/pusher";
+import { triggerPusher } from "@/lib/pusher"; // FIXED: Corrected name
 
 type ActionResult<T = unknown> = { success: true; data: T } | { success: false; error: string };
 
@@ -22,7 +22,7 @@ export async function createLabel(name: string): Promise<ActionResult<{ _id: str
       return { success: false, error: validated.error.errors[0]?.message || "Invalid data" };
     }
 
-    await connectToDatabase();
+    await dbConnect(); // FIXED: Called dbConnect()
 
     // Check if label already exists
     const existing = await Label.findOne({
@@ -39,11 +39,12 @@ export async function createLabel(name: string): Promise<ActionResult<{ _id: str
       name: validated.data.name,
     });
 
-    await triggerPusherEvent(session.user.id, "label:created", {
+    // FIXED: Updated triggerPusher call signature
+    await triggerPusher(`user-${session.user.id}`, "label:created", {
       labelId: label._id.toString(),
     });
 
-    revalidateTag("labels", "max");
+    revalidatePath("/notes"); // Using path-based revalidation
 
     return {
       success: true,
@@ -67,9 +68,8 @@ export async function updateLabel(labelId: string, name: string): Promise<Action
       return { success: false, error: validated.error.errors[0]?.message || "Invalid data" };
     }
 
-    await connectToDatabase();
+    await dbConnect(); // FIXED: Called dbConnect()
 
-    // Check if another label with this name exists
     const existing = await Label.findOne({
       userId: session.user.id,
       name: validated.data.name,
@@ -90,11 +90,12 @@ export async function updateLabel(labelId: string, name: string): Promise<Action
       return { success: false, error: "Label not found" };
     }
 
-    await triggerPusherEvent(session.user.id, "label:updated", {
+    // FIXED: Updated triggerPusher call signature
+    await triggerPusher(`user-${session.user.id}`, "label:updated", {
       labelId: label._id.toString(),
     });
 
-    revalidateTag("labels", "max");
+    revalidatePath("/notes");
 
     return {
       success: true,
@@ -113,7 +114,7 @@ export async function deleteLabel(labelId: string): Promise<ActionResult<void>> 
       return { success: false, error: "Unauthorized" };
     }
 
-    await connectToDatabase();
+    await dbConnect(); // FIXED: Called dbConnect()
 
     const label = await Label.findOneAndDelete({
       _id: labelId,
@@ -124,18 +125,17 @@ export async function deleteLabel(labelId: string): Promise<ActionResult<void>> 
       return { success: false, error: "Label not found" };
     }
 
-    // Remove label from all notes
     await Note.updateMany(
       { userId: session.user.id, labels: labelId },
       { $pull: { labels: labelId } }
     );
 
-    await triggerPusherEvent(session.user.id, "label:deleted", {
+    // FIXED: Updated triggerPusher call signature
+    await triggerPusher(`user-${session.user.id}`, "label:deleted", {
       labelId,
     });
 
-    revalidateTag("labels", "max");
-    revalidateTag("notes", "max");
+    revalidatePath("/notes");
 
     return { success: true, data: undefined };
   } catch (error) {

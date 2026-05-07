@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import type { NoteType, LabelType, ViewType } from "@/lib/types";
 import { NOTE_COLORS, type NoteColor } from "@/types/note";
-import { ColorPicker, colorClasses } from "./color-picker";
+import { ColorPicker, getNoteColorClass } from "./color-picker";
 import { LabelPicker } from "./label-picker";
 import { LabelBadge } from "@/components/labels/label-badge";
 import { Button } from "@/components/ui/button";
@@ -94,8 +94,8 @@ export function NoteEditorDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent
         className={cn(
-          "sm:max-w-xl p-0 gap-0",
-          colorClasses[color]
+          "sm:max-w-xl p-0 gap-0 border-none shadow-2xl", 
+          getNoteColorClass(color) // ✅ Success
         )}
       >
         <VisuallyHidden>

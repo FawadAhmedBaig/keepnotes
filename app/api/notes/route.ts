@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { connectToDatabase } from "@/lib/mongodb";
+import { dbConnect } from "@/lib/mongodb";
 import { Note } from "@/lib/models/note";
 import type { NoteType } from "@/lib/types";
 
@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     const labelId = searchParams.get("labelId");
     const search = searchParams.get("search");
 
-    await connectToDatabase();
+    await dbConnect();
 
     const query: Record<string, unknown> = { userId: session.user.id };
 

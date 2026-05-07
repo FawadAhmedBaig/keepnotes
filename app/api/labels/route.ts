@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { connectToDatabase } from "@/lib/mongodb";
+import { dbConnect } from "@/lib/mongodb";
 import { Label } from "@/lib/models/label";
 import type { LabelType } from "@/lib/types";
 
@@ -11,7 +11,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await connectToDatabase();
+    await dbConnect();
 
     const labels = await Label.find({ userId: session.user.id })
       .sort({ name: 1 })
