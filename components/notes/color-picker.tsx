@@ -1,8 +1,14 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Check, Palette } from "lucide-react";
 import { NOTE_COLORS, type NoteColor } from "@/types/note";
 import { cn } from "@/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 
 interface ColorPickerProps {
   value: NoteColor;
@@ -11,31 +17,56 @@ interface ColorPickerProps {
 
 export function ColorPicker({ value, onChange }: ColorPickerProps) {
   return (
-    <div className="flex flex-wrap gap-2 p-2 max-w-[200px]">
-{/* Change 'color' to 'colorObj' to avoid confusion */}
-{NOTE_COLORS.map((colorObj) => (
-  <button
-    key={colorObj.value}
-    onClick={() => onChange(colorObj.value)}
-    className={cn(
-      "w-8 h-8 rounded-full border-2 flex items-center justify-center",
-      colorObj.classes,
-      /* FIX 1: Compare 'value' to 'colorObj.value' */
-      value === colorObj.value ? "border-primary" : "border-transparent"
-    )}
-  >
-    {/* FIX 2: Compare 'value' to 'colorObj.value' here too */}
-    {value === colorObj.value && (
-      <Check className="w-4 h-4 text-foreground" />
-    )}
-  </button>
-))}
-    </div>
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 rounded-full text-slate-500 hover:bg-black/5"
+          title="Change color"
+        >
+          <Palette className="h-4 w-4" />
+        </Button>
+      </PopoverTrigger>
+      
+      <PopoverContent 
+        side="top" 
+        align="start" 
+        className="w-fit p-2 bg-popover border shadow-lg rounded-xl"
+      >
+        {/* Grid layout: 4 columns to keep it compact and professional */}
+        <div className="grid grid-cols-4 gap-2">
+          {NOTE_COLORS.map((colorObj) => (
+            <button
+              key={colorObj.value}
+              type="button" // Prevent form submission if used inside a form
+              onClick={() => onChange(colorObj.value as NoteColor)}
+              className={cn(
+                "w-8 h-8 rounded-full border flex items-center justify-center transition-transform hover:scale-110 active:scale-95",
+                colorObj.classes,
+                value === colorObj.value ? "border-slate-900 ring-1 ring-slate-900" : "border-black/10"
+              )}
+              // FIXED: Changed colorObj.label to colorObj.name to match your types
+              title={colorObj.name}
+            >
+              {value === colorObj.value && (
+                <Check className="w-4 h-4 text-slate-800" />
+              )}
+            </button>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
 export function getNoteColorClass(colorValue: string) {
   const color = NOTE_COLORS.find((c) => c.value === colorValue);
-  // Return the specific classes, or the default background if not found
-  return color ? color.classes : "bg-white dark:bg-zinc-950";
+  
+  // Return a default border so white/default notes have a visible structure in the grid
+  if (!color || color.value === "default") {
+    return "bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-800";
+  }
+  
+  return color.classes;
 }

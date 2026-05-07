@@ -71,7 +71,10 @@ export function useCreateNote() {
       color?: NoteColor;
       labels?: string[];
       isPinned?: boolean;
+      imageUrl?: string | null; // NEW: Added to mutation signature
+      imageKey?: string | null; // NEW: Added to mutation signature
     }) => {
+      // Now 'data' includes your images when passed from NoteInput
       const result = (await createNote(data)) as unknown as ActionResult<NoteType>;
       if (!result.success) throw new Error(result.error);
       return result.data;
@@ -88,6 +91,9 @@ export function useCreateNote() {
 
 /**
  * HOOK: useUpdateNote
+ */
+/**
+ * HOOK: useUpdateNote (Updated for Image Persistence)
  */
 export function useUpdateNote() {
   const queryClient = useQueryClient();
@@ -111,7 +117,15 @@ export function useUpdateNote() {
       queryClient.setQueriesData<NoteType[]>({ queryKey: ["notes"] }, (old) => {
         if (!old) return old;
         return old.map((note) =>
-          note._id === noteId ? { ...note, ...data } : note
+          note._id === noteId 
+            ? { 
+                ...note, 
+                ...data, 
+                // CRITICAL: Ensure image fields are merged optimistically
+                imageUrl: data.imageUrl !== undefined ? data.imageUrl : note.imageUrl,
+                imageKey: data.imageKey !== undefined ? data.imageKey : note.imageKey
+              } 
+            : note
         );
       });
 

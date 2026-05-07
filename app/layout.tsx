@@ -44,7 +44,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="font-sans antialiased">
+      {/* The 'suppressHydrationWarning' on the body tag prevents 
+        mismatch errors caused by browser extensions like Grammarly 
+        or Dark Reader that inject attributes into the body.
+      */}
+      <body className="font-sans antialiased" suppressHydrationWarning>
         <Providers>
           {children}
         </Providers>

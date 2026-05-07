@@ -10,7 +10,9 @@ export interface NoteType {
   isPinned: boolean;
   isArchived: boolean;
   isTrashed: boolean;
-  trashedAt: string | null;
+  imageUrl?: string | null; // ADD THIS
+  imageKey?: string | null; // ADD THIS
+  trashedAt?: string | Date | null;
   createdAt: string;
   updatedAt: string;
 }

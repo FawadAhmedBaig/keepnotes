@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import type { NoteType, LabelType, ViewType } from "@/lib/types";
-import { NOTE_COLORS, type NoteColor } from "@/types/note";
+import { type NoteColor } from "@/types/note";
 import { ColorPicker, getNoteColorClass } from "./color-picker";
 import { LabelPicker } from "./label-picker";
 import { LabelBadge } from "@/components/labels/label-badge";
@@ -12,9 +12,22 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  DialogDescription,
+  DialogClose, // Added this
 } from "@/components/ui/dialog";
-import { Pin, PinOff, Archive, ArchiveRestore, Trash2, RotateCcw, Trash } from "lucide-react";
+import { 
+  Pin, 
+  PinOff, 
+  Archive, 
+  ArchiveRestore, 
+  Trash2, 
+  RotateCcw, 
+  Trash, 
+  ImageIcon, 
+  X 
+} from "lucide-react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { toast } from "sonner";
 
 interface NoteEditorDialogProps {
   note: NoteType | null;
@@ -50,39 +63,45 @@ export function NoteEditorDialog({
   const [color, setColor] = useState<NoteColor>("default");
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [isPinned, setIsPinned] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageKey, setImageKey] = useState<string | null>(null);
 
   useEffect(() => {
     if (note) {
-      setTitle(note.title);
-      setContent(note.content);
-      setColor(note.color);
-      setSelectedLabels(note.labels);
-      setIsPinned(note.isPinned);
+      setTitle(note.title || "");
+      setContent(note.content || "");
+      setColor(note.color || "default");
+      setSelectedLabels(note.labels || []);
+      setIsPinned(note.isPinned || false);
+      setImageUrl(note.imageUrl || null);
+      setImageKey(note.imageKey || null);
     }
   }, [note]);
 
   const handleClose = useCallback(() => {
     if (note) {
       const hasChanges =
-        title !== note.title ||
-        content !== note.content ||
+        title !== (note.title || "") ||
+        content !== (note.content || "") ||
         color !== note.color ||
-        JSON.stringify(selectedLabels.sort()) !== JSON.stringify(note.labels.sort()) ||
+        JSON.stringify(selectedLabels.sort()) !== JSON.stringify([...note.labels].sort()) ||
         isPinned !== note.isPinned;
 
       if (hasChanges) {
         onSave({
           ...note,
-          title,
-          content,
+          title: title.trim(),
+          content: content.trim(),
           color,
           labels: selectedLabels,
           isPinned,
+          imageUrl,
+          imageKey,
         });
       }
     }
     onOpenChange(false);
-  }, [note, title, content, color, selectedLabels, isPinned, onSave, onOpenChange]);
+  }, [note, title, content, color, selectedLabels, isPinned, imageUrl, imageKey, onSave, onOpenChange]);
 
   const selectedLabelObjects = labels.filter((l) =>
     selectedLabels.includes(l._id)
@@ -91,146 +110,112 @@ export function NoteEditorDialog({
   if (!note) return null;
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        // CRITICAL: Ensure 'p-0' and 'gap-0' to control spacing manually
         className={cn(
-          "sm:max-w-xl p-0 gap-0 border-none shadow-2xl", 
-          getNoteColorClass(color) // ✅ Success
+          "sm:max-w-xl p-0 gap-0 border-none shadow-2xl overflow-hidden [&>button]:hidden", 
+          getNoteColorClass(color)
         )}
       >
         <VisuallyHidden>
           <DialogTitle>Edit Note</DialogTitle>
+          <DialogDescription>Note editing mode</DialogDescription>
         </VisuallyHidden>
-        <div className="relative">
+
+        {/* 1. Header Section: Input and Buttons on one horizontal line */}
+        <div className="flex items-start justify-between px-4 pt-4 pb-1 gap-2">
           <input
             type="text"
             placeholder="Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-4 pt-4 pb-1 text-lg font-medium bg-transparent border-0 outline-none placeholder:text-muted-foreground"
+            className="w-full text-lg font-bold bg-transparent border-0 outline-none placeholder:text-muted-foreground mt-1"
             disabled={note.isTrashed}
           />
-          {!note.isTrashed && (
+          
+          <div className="flex items-center gap-1 shrink-0">
+            {!note.isTrashed && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsPinned(!isPinned)}
+                className={cn(
+                  "h-9 w-9 rounded-full", 
+                  isPinned ? "text-primary" : "text-slate-500 hover:bg-black/5"
+                )}
+              >
+                {isPinned ? <PinOff className="w-5 h-5" /> : <Pin className="w-5 h-5" />}
+              </Button>
+            )}
+            
+            {/* Manual Close Button - This is the only one that will show */}
             <Button
               variant="ghost"
-              size="icon-sm"
-              onClick={() => setIsPinned(!isPinned)}
-              className="absolute top-3 right-3 rounded-full"
+              size="icon"
+              onClick={handleClose}
+              className="h-9 w-9 rounded-full text-slate-500 hover:bg-black/5"
             >
-              {isPinned ? (
-                <PinOff className="w-4 h-4" />
-              ) : (
-                <Pin className="w-4 h-4" />
-              )}
+              <X className="w-5 h-5" />
             </Button>
-          )}
+          </div>
         </div>
 
+        {/* 2. Content Section */}
         <textarea
-          placeholder="Take a note..."
+          placeholder="Note"
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          rows={8}
-          className="w-full px-4 py-2 text-sm bg-transparent border-0 outline-none resize-none placeholder:text-muted-foreground min-h-[120px]"
+          className="w-full px-4 py-2 text-base bg-transparent border-0 outline-none resize-none placeholder:text-muted-foreground min-h-[150px]"
           disabled={note.isTrashed}
         />
 
+        {/* 3. Labels Section */}
         {selectedLabelObjects.length > 0 && (
-          <div className="flex flex-wrap gap-1 px-4 pb-2">
+          <div className="flex flex-wrap gap-1 px-4 pb-3">
             {selectedLabelObjects.map((label) => (
               <LabelBadge
                 key={label._id}
                 name={label.name}
-                onRemove={
-                  note.isTrashed
-                    ? undefined
-                    : () => {
-                        const newLabels = selectedLabels.filter(
-                          (id) => id !== label._id
-                        );
-                        setSelectedLabels(newLabels);
-                        onUpdateLabels(note._id, newLabels);
-                      }
-                }
+                onRemove={note.isTrashed ? undefined : () => {
+                  const newLabels = selectedLabels.filter((id) => id !== label._id);
+                  setSelectedLabels(newLabels);
+                  onUpdateLabels(note._id, newLabels);
+                }}
               />
             ))}
           </div>
         )}
 
-        <div className="flex items-center justify-between px-2 py-2 border-t border-border/50">
-          {note.isTrashed ? (
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onRestore?.(note._id)}
-                className="gap-1"
-              >
-                <RotateCcw className="w-4 h-4" />
-                Restore
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onPermanentDelete?.(note._id)}
-                className="gap-1 text-destructive hover:text-destructive"
-              >
-                <Trash className="w-4 h-4" />
-                Delete forever
-              </Button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1">
-              <ColorPicker value={color} onChange={setColor} />
-              <LabelPicker
-                labels={labels}
-                selectedLabels={selectedLabels}
-                onChange={(newLabels) => {
-                  setSelectedLabels(newLabels);
-                  onUpdateLabels(note._id, newLabels);
-                }}
-              />
-              {viewType !== "archive" && (
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => onTogglePin(note._id)}
-                  className="rounded-full"
-                >
-                  {isPinned ? (
-                    <PinOff className="w-4 h-4" />
-                  ) : (
-                    <Pin className="w-4 h-4" />
-                  )}
+        {/* 4. Footer Toolbar */}
+        <div className="flex items-center justify-between px-2 py-2 border-t border-black/10">
+          <div className="flex items-center gap-1">
+            {!note.isTrashed && (
+              <>
+                <ColorPicker value={color} onChange={setColor} />
+                <LabelPicker
+                  labels={labels}
+                  selectedLabels={selectedLabels}
+                  onChange={(newLabels) => {
+                    setSelectedLabels(newLabels);
+                    onUpdateLabels(note._id, newLabels);
+                  }}
+                />
+                <Button variant="ghost" size="icon" onClick={() => onToggleArchive(note._id)} className="rounded-full h-9 w-9 text-slate-500">
+                  {note.isArchived ? <ArchiveRestore className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
                 </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => onToggleArchive(note._id)}
-                className="rounded-full"
-              >
-                {note.isArchived ? (
-                  <ArchiveRestore className="w-4 h-4" />
-                ) : (
-                  <Archive className="w-4 h-4" />
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => onDelete(note._id)}
-                className="rounded-full"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
+                <Button variant="ghost" size="icon" onClick={() => onDelete(note._id)} className="rounded-full h-9 w-9 text-slate-500">
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </>
+            )}
+          </div>
+          
           <Button
             variant="ghost"
             size="sm"
             onClick={handleClose}
-            className="text-sm font-medium"
+            className="text-sm font-semibold hover:bg-black/5"
           >
             Close
           </Button>

@@ -2,16 +2,18 @@ import mongoose, { Schema, models, model, Document } from "mongoose";
 // Use 'import type' to prevent Mongoose from leaking into the browser
 import type { INote as INoteBase, NoteColor } from "@/types/note";
 
-// We extend the base interface for Mongoose-specific types (ObjectIDs)
+// We extend the base interface for Mongoose-specific types
 export interface INoteDocument extends Omit<INoteBase, "_id" | "userId" | "labels" | "createdAt" | "updatedAt" | "trashedAt">, Document {
   userId: mongoose.Types.ObjectId;
   labels: mongoose.Types.ObjectId[];
+  imageUrl?: string;      // NEW: URL from Cloudinary/UploadThing
+  imageKey?: string;      // NEW: Unique key to identify the file in cloud storage
   trashedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
-// These are for the Mongoose enum validation
+// Mongoose enum validation
 const VALID_COLORS: NoteColor[] = [
   "default", "red", "orange", "yellow", "green", "teal", "blue", "purple", "pink", "brown", "gray"
 ];
