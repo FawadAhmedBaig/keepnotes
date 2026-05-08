@@ -2,7 +2,8 @@
 
 import { useSession, signOut } from "next-auth/react";
 import { useTheme } from "next-themes";
-import { Search, RefreshCw, Sun, Moon, LogOut, Settings, Lightbulb } from "lucide-react";
+import Image from "next/image";
+import { Search, RefreshCw, Sun, Moon, LogOut, Settings, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,19 +14,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
 
 interface HeaderProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onRefresh?: () => void;
-  onToggleSidebar?: () => void; // <--- ADD THIS LINE
+  onToggleSidebar?: () => void;
 }
 
 export function Header({
   searchQuery,
   onSearchChange,
   onRefresh,
+  onToggleSidebar,
 }: HeaderProps) {
   const { data: session } = useSession();
   const { theme, setTheme } = useTheme();
@@ -39,17 +40,36 @@ export function Header({
   return (
     <header className="sticky top-0 z-50 flex items-center h-14 sm:h-16 gap-2 sm:gap-4 px-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       
-      {/* 1. Brand Section: Clean and Minimal */}
+      {/* 1. Branding & Sidebar Toggle */}
       <div className="flex items-center gap-2 mr-1 sm:mr-4 shrink-0">
-        <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary/10 text-primary">
-          <Lightbulb className="w-5 h-5 fill-current" />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggleSidebar}
+          className="hidden md:flex rounded-full hover:bg-accent/50"
+          aria-label="Toggle Sidebar"
+        >
+          <Menu className="w-5 h-5 text-muted-foreground" />
+        </Button>
+
+        <div className="flex items-center gap-2 ml-1">
+          <div className="flex items-center justify-center w-9 h-9 rounded-xl overflow-hidden bg-primary/5 shadow-inner">
+            <Image 
+              src="/icon.png" 
+              alt="KeepNotes Logo" 
+              width={32} 
+              height={32} 
+              className="object-contain"
+              priority
+            />
+          </div>
+          <span className="font-bold text-xl hidden lg:block tracking-tighter">
+            Keep<span className="text-primary">Notes</span>
+          </span>
         </div>
-        <span className="font-bold text-lg hidden lg:block tracking-tight">
-          Keep<span className="text-primary">Notes</span>
-        </span>
       </div>
 
-      {/* 2. Search Section: Professional Group-Focus Styling */}
+      {/* 2. Search Section */}
       <div className="flex-1 flex items-center max-w-2xl mx-auto">
         <div className="relative flex-1 group">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors group-focus-within:text-primary pointer-events-none" />
@@ -70,7 +90,6 @@ export function Header({
             variant="ghost"
             size="icon"
             onClick={onRefresh}
-            aria-label="Refresh"
             className="hidden xs:flex rounded-full h-9 w-9"
           >
             <RefreshCw className="w-4 h-4" />
@@ -81,7 +100,6 @@ export function Header({
           variant="ghost"
           size="icon"
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          aria-label="Toggle theme"
           className="rounded-full h-9 w-9"
         >
           <Sun className="w-5 h-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -91,7 +109,7 @@ export function Header({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full hover:bg-transparent h-9 w-9 ml-1">
-              <Avatar className="w-8 h-8 border-2 border-transparent hover:border-primary transition-all">
+              <Avatar className="w-8 h-8 border-2 border-transparent hover:border-primary transition-all shadow-sm">
                 <AvatarImage src={session?.user?.image || undefined} alt={session?.user?.name || "User"} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
                   {userInitials}

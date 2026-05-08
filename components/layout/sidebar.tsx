@@ -37,23 +37,10 @@ export function Sidebar({ labels, isCollapsed = false, onEditLabels }: SidebarPr
         isCollapsed ? "w-16" : "w-64"
       )}
     >
-      <div className="flex items-center h-14 px-4 border-b border-sidebar-border">
-        {!isCollapsed && (
-          <Link href="/notes" className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
-              <Lightbulb className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-semibold text-lg text-sidebar-foreground">Keep</span>
-          </Link>
-        )}
-        {isCollapsed && (
-          <div className="flex items-center justify-center w-full">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
-              <Lightbulb className="w-5 h-5 text-primary-foreground" />
-            </div>
-          </div>
-        )}
-      </div>
+      {/* NOTE: We have removed the Branding Header (div with Link/Logo) from here.
+        The brand identity is now managed solely by the Header component to 
+        avoid visual clutter and the "double logo" issue on desktop.
+      */}
 
       <ScrollArea className="flex-1 py-4">
         <nav className="space-y-1 px-2">
@@ -66,7 +53,7 @@ export function Sidebar({ labels, isCollapsed = false, onEditLabels }: SidebarPr
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-full text-sm font-medium transition-colors",
                   isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
                     : "text-sidebar-foreground hover:bg-sidebar-accent/50"
                 )}
               >
@@ -79,7 +66,7 @@ export function Sidebar({ labels, isCollapsed = false, onEditLabels }: SidebarPr
           {!isCollapsed && labels.length > 0 && (
             <>
               <div className="px-3 py-2 mt-4">
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">
                   Labels
                 </span>
               </div>
@@ -92,7 +79,7 @@ export function Sidebar({ labels, isCollapsed = false, onEditLabels }: SidebarPr
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-full text-sm font-medium transition-colors",
                       isActive
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
                         : "text-sidebar-foreground hover:bg-sidebar-accent/50"
                     )}
                   >
@@ -107,12 +94,12 @@ export function Sidebar({ labels, isCollapsed = false, onEditLabels }: SidebarPr
           {!isCollapsed && (
             <Button
               variant="ghost"
-              className="w-full justify-start gap-3 px-3 py-2.5 rounded-full text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent/50"
+              className="w-full justify-start gap-3 px-3 py-2.5 rounded-full text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent/50 mt-2"
               onClick={onEditLabels}
             >
               <Plus className="w-5 h-5 shrink-0" />
               <span>Edit labels</span>
-              <ChevronRight className="w-4 h-4 ml-auto" />
+              <ChevronRight className="w-4 h-4 ml-auto opacity-40" />
             </Button>
           )}
         </nav>
