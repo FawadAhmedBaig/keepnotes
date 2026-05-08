@@ -9,45 +9,37 @@ const navItems = [
   { href: "/notes", label: "Notes", icon: Lightbulb },
   { href: "/archive", label: "Archive", icon: Archive },
   { href: "/trash", label: "Trash", icon: Trash2 },
-  { href: "/labels", label: "Labels", icon: Tag },
 ];
 
 export function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 flex md:hidden border-t border-border bg-background/80 backdrop-blur-lg pb-safe">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 flex md:hidden border-t border-border bg-background/80 backdrop-blur-lg pb-safe h-16">
       {navItems.map((item) => {
-        // Correctly handle active states including sub-routes
-        const isActive = 
-          pathname === item.href || 
-          (item.href !== "/" && pathname.startsWith(item.href));
-
+        const isActive = pathname === item.href || (item.href !== "/notes" && pathname.startsWith(item.href));
+        
         return (
           <Link
             key={item.href}
             href={item.href}
-            className="flex-1 flex flex-col items-center justify-center py-2 group relative h-16"
+            className="flex-1 flex flex-col items-center justify-center relative group"
           >
-            {/* Active Indicator Background Pill */}
             <div className={cn(
-              "absolute top-1.5 px-6 py-1 rounded-full transition-all duration-300",
-              isActive ? "bg-primary/15 opacity-100" : "bg-transparent opacity-0"
+              "absolute inset-x-4 top-1 bottom-6 rounded-full transition-all duration-300",
+              isActive ? "bg-primary/15 scale-100" : "bg-transparent scale-75 opacity-0"
             )} />
 
-            <item.icon 
-              className={cn(
-                "w-5 h-5 mb-1 transition-all relative z-10",
-                isActive ? "text-primary" : "text-muted-foreground"
-              )} 
-              // Added subtle fill and thicker stroke for active state
-              fill={isActive ? "currentColor" : "none"}
-              fillOpacity={0.2}
-              strokeWidth={isActive ? 2.5 : 2}
+            <item.icon className={cn(
+              "w-5 h-5 mb-1 transition-all duration-300 relative z-10",
+              isActive ? "text-primary stroke-[2.5px]" : "text-muted-foreground"
+            )} 
+            fill={isActive ? "currentColor" : "none"}
+            fillOpacity={isActive ? 0.2 : 0}
             />
 
             <span className={cn(
-              "text-[10px] font-semibold tracking-tight transition-colors relative z-10",
+              "text-[10px] font-bold tracking-tight transition-colors relative z-10",
               isActive ? "text-primary" : "text-muted-foreground"
             )}>
               {item.label}
@@ -55,6 +47,32 @@ export function MobileNav() {
           </Link>
         );
       })}
+
+      {/* FIXED LABEL LINK: 
+          Since your path is /label/[labelId], 
+          linking just to /label will 404 unless you have a page.tsx there.
+      */}
+      <Link
+        href="/notes" 
+        className={cn(
+          "flex-1 flex flex-col items-center justify-center relative group",
+          pathname.startsWith("/label") ? "text-primary" : "text-muted-foreground"
+        )}
+      >
+        <div className={cn(
+          "absolute inset-x-4 top-1 bottom-6 rounded-full transition-all duration-300",
+          pathname.startsWith("/label") ? "bg-primary/15 scale-100" : "bg-transparent scale-75 opacity-0"
+        )} />
+        
+        <Tag className={cn(
+          "w-5 h-5 mb-1 transition-all relative z-10",
+          pathname.startsWith("/label") ? "text-primary stroke-[2.5px]" : "text-muted-foreground"
+        )} 
+        fill={pathname.startsWith("/label") ? "currentColor" : "none"}
+        fillOpacity={pathname.startsWith("/label") ? 0.2 : 0}
+        />
+        <span className="text-[10px] font-bold relative z-10">Labels</span>
+      </Link>
     </nav>
   );
 }
