@@ -1,19 +1,24 @@
 "use client";
 
-import { Tag, Plus, Settings2 } from "lucide-react";
+import { Tag, Plus, Settings2, Trash2 } from "lucide-react";
 import { useLabels } from "@/hooks/use-labels";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-export default function LabelsIndexPage() {
+// Note: Ensure your parent component passes onEditLabels (the function that opens the dialog)
+export default function LabelsIndexPage({ onEditLabels }: { onEditLabels?: () => void }) {
   const { data: labels = [] } = useLabels();
 
   return (
-    <div className="flex flex-col h-full bg-background p-4 md:hidden">
+    <div className="flex flex-col h-full bg-background p-4 md:hidden pb-20">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold">Labels</h1>
-        {/* ADDED THIS BUTTON */}
-        <Button variant="outline" size="sm" className="gap-2 rounded-full border-primary/20 text-primary">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={onEditLabels} // This triggers the Manage/Edit dialog
+          className="gap-2 rounded-full border-primary/20 text-primary active:scale-95 transition-transform"
+        >
           <Settings2 className="w-4 h-4" />
           Manage
         </Button>
@@ -21,24 +26,37 @@ export default function LabelsIndexPage() {
       
       <div className="grid gap-2">
         {labels.map((label) => (
-          <Link
-            key={label._id}
-            href={`/label/${label._id}`}
-            className="flex items-center gap-4 p-4 rounded-xl border border-border/50 bg-card active:bg-secondary/30 transition-all"
-          >
-            <div className="bg-primary/10 p-2 rounded-lg">
-              <Tag className="w-4 h-4 text-primary" />
-            </div>
-            <span className="font-medium flex-1">{label.name}</span>
-            <Plus className="w-4 h-4 text-muted-foreground rotate-45" />
-          </Link>
+          <div key={label._id} className="relative group">
+            <Link
+              href={`/label/${label._id}`}
+              className="flex items-center gap-4 p-4 rounded-xl border border-border/50 bg-card active:bg-secondary/30 transition-all"
+            >
+              <div className="bg-primary/10 p-2 rounded-lg text-primary">
+                <Tag className="w-4 h-4" />
+              </div>
+              <span className="font-medium flex-1 truncate">{label.name}</span>
+            </Link>
+          </div>
         ))}
         
+        {/* The "Add New Label" logic - This should trigger your existing Edit Labels dialog */}
+        <Button 
+          variant="ghost" 
+          onClick={onEditLabels}
+          className="flex items-center gap-4 p-4 h-auto rounded-xl border border-dashed border-border text-muted-foreground hover:text-primary transition-colors mt-2"
+        >
+          <div className="p-2">
+            <Plus className="w-4 h-4" />
+          </div>
+          <span className="font-medium">Create new label</span>
+        </Button>
+
         {labels.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-border rounded-2xl">
-            <Tag className="w-12 h-12 text-muted-foreground/20 mb-4" />
-            <p className="text-muted-foreground font-medium">Create your first label</p>
-            <Button variant="link" className="text-primary mt-2">Add New Label</Button>
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="bg-secondary/50 p-4 rounded-full mb-4">
+               <Tag className="w-8 h-8 text-muted-foreground/40" />
+            </div>
+            <p className="text-muted-foreground font-medium">No labels found</p>
           </div>
         )}
       </div>
