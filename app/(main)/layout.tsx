@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -39,7 +39,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   }, [queryClient]);
 
   return (
-    <NotesContext.Provider value={{ searchQuery: debouncedSearch }}>
+    <NotesContext.Provider 
+      value={{ 
+        searchQuery: debouncedSearch,
+        // Passing this through context allows the mobile page to open the dialog
+        onEditLabels: () => setIsLabelDialogOpen(true) 
+      }}
+    >
       <div className="flex h-screen overflow-hidden bg-background">
         <Sidebar
           labels={labels}

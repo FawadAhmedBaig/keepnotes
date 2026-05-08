@@ -1,15 +1,14 @@
-"use client";
-
 import { createContext, useContext } from "react";
 
 interface NotesContextType {
   searchQuery: string;
+  onEditLabels?: () => void; // ADD THIS LINE
 }
 
+// Ensure the default value matches the interface
 export const NotesContext = createContext<NotesContextType>({
   searchQuery: "",
+  onEditLabels: () => {}, // Add a default empty function
 });
 
-export function useNotesContext() {
-  return useContext(NotesContext);
-}
+export const useNotesContext = () => useContext(NotesContext);
