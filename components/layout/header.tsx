@@ -2,8 +2,7 @@
 
 import { useSession, signOut } from "next-auth/react";
 import { useTheme } from "next-themes";
-import Image from "next/image";
-import { Search, RefreshCw, Sun, Moon, LogOut, Settings } from "lucide-react";
+import { Search, RefreshCw, Sun, Moon, LogOut, Settings, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -20,14 +19,13 @@ interface HeaderProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onRefresh?: () => void;
-  onToggleSidebar?: () => void;
+  onToggleSidebar?: () => void; // <--- ADD THIS LINE
 }
 
 export function Header({
   searchQuery,
   onSearchChange,
   onRefresh,
-  onToggleSidebar, // Added this to the destructuring
 }: HeaderProps) {
   const { data: session } = useSession();
   const { theme, setTheme } = useTheme();
@@ -41,17 +39,10 @@ export function Header({
   return (
     <header className="sticky top-0 z-50 flex items-center h-14 sm:h-16 gap-2 sm:gap-4 px-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       
-      {/* 1. Brand Section: Using your high-res logo */}
+      {/* 1. Brand Section: Clean and Minimal */}
       <div className="flex items-center gap-2 mr-1 sm:mr-4 shrink-0">
-        <div className="flex items-center justify-center w-9 h-9 rounded-xl overflow-hidden bg-primary/5">
-          <Image 
-            src="/icon.png" 
-            alt="KeepNotes Logo" 
-            width={32} 
-            height={32} 
-            className="object-contain"
-            priority
-          />
+        <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary/10 text-primary">
+          <Lightbulb className="w-5 h-5 fill-current" />
         </div>
         <span className="font-bold text-lg hidden lg:block tracking-tight">
           Keep<span className="text-primary">Notes</span>
