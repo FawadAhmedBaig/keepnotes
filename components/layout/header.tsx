@@ -19,7 +19,7 @@ interface HeaderProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onRefresh?: () => void;
-  onToggleSidebar?: () => void; // ADD THIS LINE
+  onToggleSidebar?: () => void; // <--- ADD THIS LINE
 }
 
 export function Header({
