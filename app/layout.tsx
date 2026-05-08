@@ -12,7 +12,14 @@ export const metadata: Metadata = {
   description: 'A beautiful note-taking app inspired by Google Keep',
   generator: 'v0.app',
   icons: {
+    // This points to your new high-res logo
     icon: [
+      {
+        url: '/icon.png', // Ensure your 1000x1000 image is saved as 'icon.png' in the 'app' folder
+        sizes: '1000x1000',
+        type: 'image/png',
+      },
+      // Keeps support for smaller optimized versions if you have them
       {
         url: '/icon-light-32x32.png',
         media: '(prefers-color-scheme: light)',
@@ -21,12 +28,9 @@ export const metadata: Metadata = {
         url: '/icon-dark-32x32.png',
         media: '(prefers-color-scheme: dark)',
       },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
     ],
-    apple: '/apple-icon.png',
+    // High-res logo for Apple devices/bookmarks
+    apple: '/icon.png', 
   },
 }
 
@@ -44,10 +48,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      {/* The 'suppressHydrationWarning' on the body tag prevents 
-        mismatch errors caused by browser extensions like Grammarly 
-        or Dark Reader that inject attributes into the body.
-      */}
       <body className="font-sans antialiased" suppressHydrationWarning>
         <Providers>
           {children}
