@@ -1,30 +1,20 @@
 "use client";
 
-import { Tag, Plus, Settings2 } from "lucide-react";
+import { Tag, Plus } from "lucide-react";
 import { useLabels } from "@/hooks/use-labels";
-import { useNotesContext } from "@/lib/notes-context"; // Import the hook
+import { useNotesContext } from "@/lib/notes-context";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export default function LabelsIndexPage() {
   const { data: labels = [] } = useLabels();
-  // Pull the open function from the global context
   const { onEditLabels } = useNotesContext();
 
   return (
     <div className="flex flex-col h-full bg-background p-4 md:hidden pb-24">
-      {/* Header Section */}
-      <div className="flex items-center justify-between mb-6">
+      {/* Header Section - Simplified */}
+      <div className="flex items-center mb-6 pt-2">
         <h1 className="text-xl font-bold tracking-tight">Labels</h1>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={onEditLabels} 
-          className="gap-2 rounded-full border-primary/20 text-primary active:scale-95 transition-all shadow-sm"
-        >
-          <Settings2 className="w-4 h-4" />
-          <span className="text-xs font-semibold">Manage</span>
-        </Button>
       </div>
       
       <div className="grid gap-3">
@@ -44,7 +34,7 @@ export default function LabelsIndexPage() {
           </div>
         ))}
         
-        {/* Create New Label Button */}
+        {/* The "Create New Label" button stays as the primary action */}
         <Button 
           variant="ghost" 
           onClick={onEditLabels}
